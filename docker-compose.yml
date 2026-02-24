@@ -1,0 +1,25 @@
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: gophermart
+      POSTGRES_USER: gophermart
+      POSTGRES_PASSWORD: gophermart
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  gophermart:
+    build: .
+    environment:
+      RUN_ADDRESS: 0.0.0.0:8080
+      DATABASE_URI: postgres://gophermart:gophermart@postgres:5432/gophermart?sslmode=disable
+      ACCRUAL_SYSTEM_ADDRESS: http://localhost:8081
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+
+volumes:
+  pgdata:

@@ -1,25 +1,58 @@
-# go-musthave-diploma-tpl
+# gophermart
 
-Шаблон репозитория для индивидуального дипломного проекта курса «Go-разработчик»
+![lint](https://github.com/kayumovtd/gophermart/actions/workflows/lint.yml/badge.svg)
+![coverage](https://codecov.io/gh/kayumovtd/gophermart/branch/main/graph/badge.svg)
 
-# Начало работы
+HTTP API сервис накопительной системы лояльности «Гофермарт».
 
-1. Склонируйте репозиторий в любую подходящую директорию на вашем компьютере.
-2. В корне репозитория выполните команду `go mod init <name>` (где `<name>` — адрес вашего репозитория на GitHub без
-   префикса `https://`) для создания модуля
+## Требования
 
-# Обновление шаблона
+- Go 1.24+
+- PostgreSQL 17+
 
-Чтобы иметь возможность получать обновления автотестов и других частей шаблона, выполните команду:
+## Конфигурация
 
+Переменные окружения:
+
+- `RUN_ADDRESS` — адрес запуска сервиса (по умолчанию `localhost:8080`)
+- `DATABASE_URI` — строка подключения к PostgreSQL
+- `ACCRUAL_SYSTEM_ADDRESS` — адрес системы начислений
+- `LOG_LEVEL` — уровень логирования (по умолчанию `info`)
+
+Флаги:
+
+- `-a` — адрес запуска сервиса
+- `-d` — строка подключения к PostgreSQL
+- `-r` — адрес системы начислений
+- `-l` — уровень логирования
+
+Флаги имеют более высокий приоритет, чем переменные окружения.
+
+## Локальный запуск (Go)
+
+```bash
+export DATABASE_URI="postgres://user:pass@localhost:5432/gophermart?sslmode=disable"
+export ACCRUAL_SYSTEM_ADDRESS="http://localhost:8081"
+
+go run ./cmd/gophermart -a 0.0.0.0:8080
 ```
-git remote add -m master template https://github.com/yandex-praktikum/go-musthave-diploma-tpl.git
+
+## Локальный запуск (Docker Compose)
+
+```bash
+docker-compose up --build
 ```
 
-Для обновления кода автотестов выполните команду:
+Сервис начислений является внешним. Для локальных проверок задайте `ACCRUAL_SYSTEM_ADDRESS`.
 
-```
-git fetch template && git checkout template/master .github
+## Тестирование
+
+```bash
+go test ./... -cover
 ```
 
-Затем добавьте полученные изменения в свой репозиторий.
+## Линтинг
+
+```bash
+golangci-lint run
+```
