@@ -7,19 +7,20 @@ import (
 	"github.com/go-chi/chi/v5"
 	chimiddleware "github.com/go-chi/chi/v5/middleware"
 
+	"github.com/kayumovtd/gophermart/internal/auth"
 	"github.com/kayumovtd/gophermart/internal/config"
 	"github.com/kayumovtd/gophermart/internal/handlers"
 	"github.com/kayumovtd/gophermart/internal/logger"
 	"github.com/kayumovtd/gophermart/internal/middleware"
 )
 
-func New(cfg config.Config, log *logger.Logger) *http.Server {
+func New(cfg config.Config, log *logger.Logger, authService *auth.Service, tokenManager *auth.TokenManager) *http.Server {
 	r := chi.NewRouter()
 	r.Use(chimiddleware.RequestID)
 	r.Use(chimiddleware.Recoverer)
 	r.Use(middleware.RequestLogger(log))
 
-	h := handlers.New(log)
+	h := handlers.New(authService, middleware.Auth(tokenManager))
 	h.RegisterRoutes(r)
 
 	return &http.Server{
