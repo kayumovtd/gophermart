@@ -1,32 +1,49 @@
 package handlers
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-
-	"github.com/kayumovtd/gophermart/internal/logger"
 )
+
+// authService описывает операции аутентификации, используемые HTTP-слоем
+type authService interface {
+	Register(ctx context.Context, login, password string) (string, error)
+	Login(ctx context.Context, login, password string) (string, error)
+}
 
 // Handler содержит HTTP‑хендлеры сервиса
 type Handler struct {
-	// log логгер приложения
-	log *logger.Logger
+	// authMiddleware проверка аутентификации
+	authMiddleware func(http.Handler) http.Handler
+	// registerHandler регистрация пользователя
+	registerHandler http.HandlerFunc
+	// loginHandler вход пользователя
+	loginHandler http.HandlerFunc
 }
 
-func New(log *logger.Logger) *Handler {
-	return &Handler{log: log}
+func New(authSvc authService, authMiddleware func(http.Handler) http.Handler) *Handler {
+	return &Handler{
+		authMiddleware:  authMiddleware,
+		registerHandler: newRegisterHandler(authSvc),
+		loginHandler:    newLoginHandler(authSvc),
+	}
 }
 
 func (h *Handler) RegisterRoutes(r chi.Router) {
 	r.Route("/api/user", func(r chi.Router) {
-		r.Post("/register", h.notImplemented)
-		r.Post("/login", h.notImplemented)
-		r.Post("/orders", h.notImplemented)
-		r.Get("/orders", h.notImplemented)
-		r.Get("/balance", h.notImplemented)
-		r.Post("/balance/withdraw", h.notImplemented)
-		r.Get("/withdrawals", h.notImplemented)
+		r.Post("/register", h.registerHandler)
+		r.Post("/login", h.loginHandler)
+
+		r.Group(func(r chi.Router) {
+			r.Use(h.authMiddleware)
+			r.Post("/orders", h.notImplemented)
+			r.Get("/orders", h.notImplemented)
+			r.Get("/balance", h.notImplemented)
+			r.Post("/balance/withdraw", h.notImplemented)
+			r.Get("/withdrawals", h.notImplemented)
+		})
 	})
 }
 

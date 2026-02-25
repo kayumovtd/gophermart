@@ -19,6 +19,9 @@ func TestParseDefaults(t *testing.T) {
 	if cfg.LogLevel != defaultLogLevel {
 		t.Fatalf("LogLevel = %q, want %q", cfg.LogLevel, defaultLogLevel)
 	}
+	if cfg.AuthSecret != defaultAuthSecret {
+		t.Fatalf("AuthSecret = %q, want %q", cfg.AuthSecret, defaultAuthSecret)
+	}
 }
 
 func TestParseEnvOverride(t *testing.T) {
@@ -28,6 +31,7 @@ func TestParseEnvOverride(t *testing.T) {
 			"DATABASE_URI":           "postgres://example",
 			"ACCRUAL_SYSTEM_ADDRESS": "http://accrual.local",
 			"LOG_LEVEL":              "debug",
+			"AUTH_SECRET":            "super-secret",
 		}
 		v, ok := values[key]
 		return v, ok
@@ -49,6 +53,9 @@ func TestParseEnvOverride(t *testing.T) {
 	if cfg.LogLevel != "debug" {
 		t.Fatalf("LogLevel = %q", cfg.LogLevel)
 	}
+	if cfg.AuthSecret != "super-secret" {
+		t.Fatalf("AuthSecret = %q", cfg.AuthSecret)
+	}
 }
 
 func TestParseFlagsOverrideEnv(t *testing.T) {
@@ -58,12 +65,19 @@ func TestParseFlagsOverrideEnv(t *testing.T) {
 			"DATABASE_URI":           "postgres://example",
 			"ACCRUAL_SYSTEM_ADDRESS": "http://accrual.local",
 			"LOG_LEVEL":              "debug",
+			"AUTH_SECRET":            "env-secret",
 		}
 		v, ok := values[key]
 		return v, ok
 	}
 
-	args := []string{"-a", "127.0.0.1:7777", "-d", "postgres://override", "-r", "http://accrual.override", "-l", "warn"}
+	args := []string{
+		"-a", "127.0.0.1:7777",
+		"-d", "postgres://override",
+		"-r", "http://accrual.override",
+		"-l", "warn",
+		"--auth-secret", "flag-secret",
+	}
 	cfg, err := Parse(args, lookup)
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -79,6 +93,9 @@ func TestParseFlagsOverrideEnv(t *testing.T) {
 	}
 	if cfg.LogLevel != "warn" {
 		t.Fatalf("LogLevel = %q", cfg.LogLevel)
+	}
+	if cfg.AuthSecret != "flag-secret" {
+		t.Fatalf("AuthSecret = %q", cfg.AuthSecret)
 	}
 }
 
