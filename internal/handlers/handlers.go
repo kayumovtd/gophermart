@@ -1,17 +1,13 @@
 package handlers
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
-)
 
-// authService описывает операции аутентификации, используемые HTTP-слоем
-type authService interface {
-	Register(ctx context.Context, login, password string) (string, error)
-	Login(ctx context.Context, login, password string) (string, error)
-}
+	authHandler "github.com/kayumovtd/gophermart/internal/handlers/auth"
+	ordersHandler "github.com/kayumovtd/gophermart/internal/handlers/orders"
+)
 
 // Handler содержит HTTP‑хендлеры сервиса
 type Handler struct {
@@ -21,13 +17,23 @@ type Handler struct {
 	registerHandler http.HandlerFunc
 	// loginHandler вход пользователя
 	loginHandler http.HandlerFunc
+	// uploadOrderHandler загрузка номера заказа
+	uploadOrderHandler http.HandlerFunc
+	// listOrdersHandler список заказов пользователя
+	listOrdersHandler http.HandlerFunc
 }
 
-func New(authSvc authService, authMiddleware func(http.Handler) http.Handler) *Handler {
+func New(
+	authSvc authHandler.Service,
+	orderSvc ordersHandler.Service,
+	authMiddleware func(http.Handler) http.Handler,
+) *Handler {
 	return &Handler{
-		authMiddleware:  authMiddleware,
-		registerHandler: newRegisterHandler(authSvc),
-		loginHandler:    newLoginHandler(authSvc),
+		authMiddleware:     authMiddleware,
+		registerHandler:    authHandler.NewRegisterHandler(authSvc),
+		loginHandler:       authHandler.NewLoginHandler(authSvc),
+		uploadOrderHandler: ordersHandler.NewUploadHandler(orderSvc),
+		listOrdersHandler:  ordersHandler.NewListHandler(orderSvc),
 	}
 }
 
@@ -38,8 +44,8 @@ func (h *Handler) RegisterRoutes(r chi.Router) {
 
 		r.Group(func(r chi.Router) {
 			r.Use(h.authMiddleware)
-			r.Post("/orders", h.notImplemented)
-			r.Get("/orders", h.notImplemented)
+			r.Post("/orders", h.uploadOrderHandler)
+			r.Get("/orders", h.listOrdersHandler)
 			r.Get("/balance", h.notImplemented)
 			r.Post("/balance/withdraw", h.notImplemented)
 			r.Get("/withdrawals", h.notImplemented)

@@ -12,15 +12,23 @@ import (
 	"github.com/kayumovtd/gophermart/internal/handlers"
 	"github.com/kayumovtd/gophermart/internal/logger"
 	"github.com/kayumovtd/gophermart/internal/middleware"
+	"github.com/kayumovtd/gophermart/internal/orders"
 )
 
-func New(cfg config.Config, log *logger.Logger, authService *auth.Service, tokenManager *auth.TokenManager) *http.Server {
+type Dependencies struct {
+	Logger        *logger.Logger
+	AuthService   *auth.Service
+	OrdersService *orders.Service
+	TokenManager  *auth.TokenManager
+}
+
+func New(cfg config.Config, deps Dependencies) *http.Server {
 	r := chi.NewRouter()
 	r.Use(chimiddleware.RequestID)
 	r.Use(chimiddleware.Recoverer)
-	r.Use(middleware.RequestLogger(log))
+	r.Use(middleware.RequestLogger(deps.Logger))
 
-	h := handlers.New(authService, middleware.Auth(tokenManager))
+	h := handlers.New(deps.AuthService, deps.OrdersService, middleware.Auth(deps.TokenManager))
 	h.RegisterRoutes(r)
 
 	return &http.Server{

@@ -51,6 +51,14 @@ docker-compose up --build
 Сервис начислений является внешним. Для локальных проверок задайте `ACCRUAL_SYSTEM_ADDRESS`.
 После `register/login` токен возвращается в заголовке `Authorization: Bearer <jwt>`.
 
+## Обработка заказов
+
+- Загрузка заказа через `POST /api/user/orders` только сохраняет заказ в `orders` и ставит задачу в очередь
+- Очередь реализована в отдельной таблице PostgreSQL `order_jobs`, а не в таблице `orders`
+- Фоновый процессор с пулом воркеров периодически выбирает задачи из `order_jobs`, блокирует их (`FOR UPDATE SKIP LOCKED`) и выполняет запросы в accrual-сервис
+- По результату обработки воркеры обновляют статус заказа в `orders` (`NEW/PROCESSING/INVALID/PROCESSED`) и метаданные ретраев в `order_jobs`
+- При ответе `429 Too Many Requests` применяется global pause для всех воркеров с учетом `Retry-After`
+
 ## Тестирование
 
 ```bash

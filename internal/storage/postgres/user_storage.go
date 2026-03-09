@@ -13,15 +13,15 @@ import (
 	"github.com/kayumovtd/gophermart/internal/repository"
 )
 
-type UserRepository struct {
+type UserStorage struct {
 	pool *pgxpool.Pool
 }
 
-func NewUserRepository(pool *pgxpool.Pool) *UserRepository {
-	return &UserRepository{pool: pool}
+func NewUserStorage(pool *pgxpool.Pool) *UserStorage {
+	return &UserStorage{pool: pool}
 }
 
-func (r *UserRepository) Create(ctx context.Context, login, passwordHash string) (repository.User, error) {
+func (r *UserStorage) Create(ctx context.Context, login, passwordHash string) (repository.User, error) {
 	const query = `
 INSERT INTO users (login, password_hash)
 VALUES ($1, $2)
@@ -42,7 +42,7 @@ RETURNING id, login, password_hash;
 	return user, nil
 }
 
-func (r *UserRepository) GetByLogin(ctx context.Context, login string) (repository.User, error) {
+func (r *UserStorage) GetByLogin(ctx context.Context, login string) (repository.User, error) {
 	const query = `
 SELECT id, login, password_hash
 FROM users
