@@ -77,8 +77,8 @@ func (c *Client) GetOrder(ctx context.Context, number string) (Order, error) {
 		return Order{}, fmt.Errorf("create accrual request: %w", err)
 	}
 
-	//nolint:gosec валидируем урлу через parseBaseURL, а путь фиксируем на уровне контракта, так что игнорим ворнинг
-	resp, err := c.httpClient.Do(req)
+	//  Валидируем урлу через parseBaseURL, а путь фиксируем на уровне контракта, так что игнорим ворнинг
+	resp, err := c.httpClient.Do(req) //nolint:gosec
 	if err != nil {
 		return Order{}, fmt.Errorf("send accrual request: %w", err)
 	}

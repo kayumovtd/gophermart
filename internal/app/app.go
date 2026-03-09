@@ -15,6 +15,7 @@ import (
 
 	"github.com/kayumovtd/gophermart/internal/accrual"
 	"github.com/kayumovtd/gophermart/internal/auth"
+	"github.com/kayumovtd/gophermart/internal/balance"
 	"github.com/kayumovtd/gophermart/internal/config"
 	"github.com/kayumovtd/gophermart/internal/logger"
 	"github.com/kayumovtd/gophermart/internal/orders"
@@ -61,15 +62,18 @@ func New(ctx context.Context, cfg config.Config) (*App, error) {
 	authService := auth.NewService(userStorage, tokenManager)
 	orderStorage := postgres.NewOrderStorage(pool)
 	ordersService := orders.NewService(orderStorage)
+	balanceStorage := postgres.NewBalanceStorage(pool)
+	balanceService := balance.NewService(balanceStorage)
 	accrualClient := accrual.NewClient(cfg.AccrualAddress, &http.Client{Timeout: 5 * time.Second})
 	processor := orders.NewProcessor(orderStorage, accrualClient, logg, 4)
 
 	app := &App{
 		server: server.New(cfg, server.Dependencies{
-			Logger:        logg,
-			AuthService:   authService,
-			OrdersService: ordersService,
-			TokenManager:  tokenManager,
+			Logger:         logg,
+			AuthService:    authService,
+			OrdersService:  ordersService,
+			BalanceService: balanceService,
+			TokenManager:   tokenManager,
 		}),
 		log:       logg,
 		db:        pool,

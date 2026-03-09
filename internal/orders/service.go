@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/kayumovtd/gophermart/internal/ordervalidation"
 	"github.com/kayumovtd/gophermart/internal/repository"
 )
 
@@ -50,7 +51,7 @@ func (s *Service) Upload(ctx context.Context, userID int64, number string) (Uplo
 	}
 
 	number = strings.TrimSpace(number)
-	if !isValidOrderNumber(number) {
+	if !ordervalidation.IsValidOrderNumber(number) {
 		return 0, ErrInvalidOrderNumber
 	}
 
@@ -109,38 +110,4 @@ func (s *Service) handleConcurrentCreate(ctx context.Context, userID int64, numb
 	}
 
 	return 0, ErrOrderUploadedByAnotherUser
-}
-
-func isValidOrderNumber(number string) bool {
-	if number == "" {
-		return false
-	}
-
-	for i := 0; i < len(number); i++ {
-		if number[i] < '0' || number[i] > '9' {
-			return false
-		}
-	}
-
-	return luhnValid(number)
-}
-
-func luhnValid(number string) bool {
-	sum := 0
-	doubleNext := false
-
-	for i := len(number) - 1; i >= 0; i-- {
-		digit := int(number[i] - '0')
-		if doubleNext {
-			digit *= 2
-			if digit > 9 {
-				digit -= 9
-			}
-		}
-
-		sum += digit
-		doubleNext = !doubleNext
-	}
-
-	return sum%10 == 0
 }
